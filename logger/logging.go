@@ -36,8 +36,8 @@ func Info(msg string, fields ...zapcore.Field) {
 	log.Info(msg, fields...)
 }
 
-func Error(msg string, fields ...zapcore.Field) {
-	log.Error(msg, fields...)
+func Error(err error, fields ...zapcore.Field) {
+	log.Error(err.Error(), fields...)
 }
 
 func Debug(msg string, fields ...zapcore.Field) {
