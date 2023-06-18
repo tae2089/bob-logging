@@ -1,8 +1,6 @@
 package logger
 
 import (
-	"os"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -15,13 +13,11 @@ func init() {
 	encoderConfig.TimeKey = "timestamp"
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	consoleEncoder := zapcore.NewJSONEncoder(encoderConfig)
-	// consoleDebugging := zapcore.Lock(os.Stdout)
 
-	consoleErrors := zapcore.Lock(os.Stderr)
+	// consoleErrors := zapcore.Lock(os.Stderr)
 	writeStdout := zapcore.AddSync(CustomWriter{})
 	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, zapcore.NewMultiWriteSyncer(writeStdout), zapcore.InfoLevel),
-		zapcore.NewCore(consoleEncoder, consoleErrors, zapcore.ErrorLevel),
+		zapcore.NewCore(consoleEncoder, zapcore.NewMultiWriteSyncer(writeStdout), zapcore.DebugLevel),
 	)
 
 	log = zap.New(core,
@@ -36,8 +32,8 @@ func Info(msg string, fields ...zapcore.Field) {
 	log.Info(msg, fields...)
 }
 
-func Error(err error, fields ...zapcore.Field) {
-	log.Error(err.Error(), fields...)
+func Error(msg string, fields ...zapcore.Field) {
+	log.Error(msg, fields...)
 }
 
 func Debug(msg string, fields ...zapcore.Field) {
