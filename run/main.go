@@ -9,5 +9,5 @@ import (
 func main() {
 	logger.Debug("asdasd")
 	logger.Info("123123")
-	logger.Error(errors.New("123123").Error())
+	logger.Error(errors.New("123123"))
 }
