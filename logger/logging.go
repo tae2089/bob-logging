@@ -9,23 +9,51 @@ var log *zap.Logger
 
 func init() {
 
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.TimeKey = "timestamp"
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	consoleEncoder := zapcore.NewJSONEncoder(encoderConfig)
+	// log = zap.New(core,
+	// 	zap.AddCaller(),
+	// 	zap.AddCallerSkip(1),
+	// 	zap.AddStacktrace(zap.ErrorLevel),
+	// )
+	log = createLogger()
+	// log = zap.NewExample()
 
-	// consoleErrors := zapcore.Lock(os.Stderr)
-	writeStdout := zapcore.AddSync(CustomWriter{})
-	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, zapcore.NewMultiWriteSyncer(writeStdout), zapcore.DebugLevel),
-	)
+}
 
-	log = zap.New(core,
-		zap.AddCaller(),
-		zap.AddCallerSkip(1),
-		zap.AddStacktrace(zap.ErrorLevel),
-	)
+func GetLogger() *zap.Logger {
+	return log
+}
 
+func createLogger() *zap.Logger {
+	encoderCfg := zap.NewProductionEncoderConfig()
+	encoderCfg.TimeKey = "timestamp"
+	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+	config := zap.Config{
+		Level:             zap.NewAtomicLevelAt(zap.DebugLevel),
+		Development:       false,
+		DisableCaller:     true,
+		DisableStacktrace: false,
+		Sampling:          nil,
+		Encoding:          "json",
+		EncoderConfig:     encoderCfg,
+		OutputPaths: []string{
+			"stderr",
+		},
+		ErrorOutputPaths: []string{
+			"stderr",
+		},
+	}
+
+	return zap.Must(config.Build(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
+		encoderConfig := zap.NewProductionEncoderConfig()
+		encoderConfig.TimeKey = "timestamp"
+		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		encoder := zapcore.NewJSONEncoder(encoderConfig)
+		writeStdout := zapcore.AddSync(CustomWriter{})
+		core := zapcore.NewTee(
+			zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(writeStdout), zapcore.DebugLevel),
+		)
+		return core
+	})))
 }
 
 func Info(msg string, fields ...zapcore.Field) {
