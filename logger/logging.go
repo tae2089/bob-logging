@@ -21,8 +21,9 @@ func createLogger() *zap.Logger {
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.TimeKey = "timestamp"
 	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+	level := getLogLevel()
 	config := zap.Config{
-		Level:             zap.NewAtomicLevelAt(zap.DebugLevel),
+		Level:             zap.NewAtomicLevelAt(level),
 		Development:       false,
 		DisableCaller:     true,
 		DisableStacktrace: false,
@@ -36,25 +37,16 @@ func createLogger() *zap.Logger {
 			"stderr",
 		},
 	}
-	return zap.Must(config.Build(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
-		encoderConfig := zap.NewProductionEncoderConfig()
-		encoderConfig.TimeKey = "timestamp"
-		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-		encoder := zapcore.NewJSONEncoder(encoderConfig)
-		stdout := zapcore.AddSync(os.Stdout)
-		core := zapcore.NewTee(
-			zapcore.NewCore(encoder, stdout, zapcore.DebugLevel),
-		)
-		return core
-	})))
+
+	return zap.Must(config.Build())
 }
 
 func Info(msg string, fields ...zapcore.Field) {
 	log.Info(msg, fields...)
 }
 
-func Error(err error, fields ...zapcore.Field) {
-	log.Error(err.Error(), fields...)
+func Error(msg string, fields ...zapcore.Field) {
+	log.Error(msg, fields...)
 }
 
 func Debug(msg string, fields ...zapcore.Field) {
@@ -63,4 +55,24 @@ func Debug(msg string, fields ...zapcore.Field) {
 
 func Warn(msg string, fields ...zapcore.Field) {
 	log.Warn(msg, fields...)
+}
+
+func getLogLevel() zapcore.Level {
+	level := os.Getenv("LOG_LEVEL")
+	switch level {
+	case "debug":
+		return zap.DebugLevel
+	case "info":
+		return zap.InfoLevel
+	case "warn":
+		return zap.WarnLevel
+	case "error":
+		return zap.ErrorLevel
+	case "fatal":
+		return zap.FatalLevel
+	case "panic":
+		return zap.PanicLevel
+	default:
+		return zap.InfoLevel
+	}
 }
